@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* shadcn/ui tokens mapped to the "Stay Dirty" palette */
+  --background: 36 100% 97%;            /* cream #FFFAF2 */
+  --foreground: 209 28% 24%;            /* ink #2B3D4D */
+
+  --primary: 209 28% 33%;               /* navy #3D566C */
+  --primary-foreground: 36 100% 97%;
+
+  --secondary: 46 52% 84%;              /* sand #EBE1C0 */
+  --secondary-foreground: 209 28% 24%;
+
+  --accent: 2 77% 85%;                  /* blush #F5BDBB */
+  --accent-foreground: 209 28% 24%;
+
+  --muted: 46 52% 84%;
+  --muted-foreground: 209 15% 40%;
+
+  --card: 36 100% 97%;
+  --card-foreground: 209 28% 24%;
+
+  --popover: 36 100% 97%;
+  --popover-foreground: 209 28% 24%;
+
+  --destructive: 0 65% 45%;
+  --destructive-foreground: 36 100% 97%;
+
+  --border: 209 28% 24%;
+  --input: 209 28% 24%;
+  --ring: 209 28% 33%;
+
+  --radius: 0rem;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-cream text-ink font-jost antialiased selection:bg-blush selection:text-ink;
+  }
+  /* Anchor targets clear the sticky header */
+  section[id], footer[id] {
+    scroll-margin-top: 90px;
+  }
+}
+
+@layer components {
+  /* Ultra display type: the chunky uppercase headline face */
+  .ultra {
+    @apply font-ultra font-normal uppercase;
+  }
+  /* Italic serif section titles ("the dirty list", "meet the merch") */
+  .script {
+    @apply font-script italic font-normal leading-none text-ink text-[clamp(40px,5vw,64px)];
+  }
+  /* Solid block button */
+  .btn-block {
+    @apply inline-block bg-ink text-cream font-jost font-bold text-base tracking-[.14em] uppercase px-[38px] py-4 transition-[background-color,color,transform] duration-200 hover:bg-rose hover:text-ink hover:-translate-y-0.5 disabled:opacity-60 disabled:pointer-events-none;
+  }
+  /* Outlined sticker-style card */
+  .card-ink {
+    @apply bg-cream border-[3px] border-ink;
+  }
+  /* Form fields */
+  .field {
+    @apply w-full border-2 border-ink bg-cream px-4 py-3.5 text-base text-ink placeholder:text-[#6d7c88] focus:outline-none focus:ring-2 focus:ring-navy focus:ring-offset-2 focus:ring-offset-cream;
+  }
+}
+
+@layer utilities {
+  .text-stroke-3 {
+    -webkit-text-stroke: 3px theme("colors.ink");
+    paint-order: stroke fill;
+  }
+  .text-stroke-1 {
+    -webkit-text-stroke: 1.5px theme("colors.ink");
+    paint-order: stroke fill;
+  }
+  .bg-checks {
+    background: conic-gradient(
+        theme("colors.slate") 25%,
+        theme("colors.sand") 0 50%,
+        theme("colors.slate") 0 75%,
+        theme("colors.sand") 0
+      )
+      0 0 / 34px 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

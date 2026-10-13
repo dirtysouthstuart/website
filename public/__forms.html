@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Forms</title>
+  </head>
+  <body>
+    <!--
+      Netlify Forms detection file. Netlify reads this at deploy time to register
+      the forms below; the React forms post here via src/lib/netlify-forms.ts.
+      Keep field names in sync with src/app/contact/contact-form.tsx and
+      src/components/JoinClubForm.tsx.
+    -->
+    <form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="contact" />
+      <input name="bot-field" />
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <input type="tel" name="phone" />
+      <input type="text" name="event_date" />
+      <input type="text" name="party_size" />
+      <textarea name="message"></textarea>
+      <input type="checkbox" name="consent" />
+    </form>
+
+    <form name="born-dirty-club" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="born-dirty-club" />
+      <input name="bot-field" />
+      <input type="text" name="first_name" />
+      <input type="text" name="last_name" />
+      <input type="email" name="email" />
+      <input type="text" name="birthday" />
+    </form>
+  </body>
+</html>

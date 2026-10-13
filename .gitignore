@@ -1,0 +1,27 @@
+# dependencies
+node_modules
+
+# Next.js build output
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# Netlify
+.netlify
+
+# env files
+.env*.local
+
+# OS / misc
+.DS_Store
+Thumbs.db
+*.tar.gz
+
+# Client reference material (design zips, PDFs, mockups). Kept locally, not in the repo.
+/Dirty South Bar Website/
+/Dirty South Bar — Brand Landing Pages (2)/
+/images for reference/
+/*.zip
+/*.pdf
+/Branded Waffle House Shirt.png
