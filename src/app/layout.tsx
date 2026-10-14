@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { DM_Serif_Display, Jost, Ultra } from "next/font/google";
+import localFont from "next/font/local";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,9 +8,27 @@ import { JsonLd, barSchema, websiteSchema } from "@/lib/structured-data";
 import { shareImage, site } from "@/lib/site";
 import "./globals.css";
 
-const ultra = Ultra({ subsets: ["latin"], weight: "400", variable: "--font-ultra", display: "swap" });
-const jost = Jost({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-jost", display: "swap" });
-const dmSerif = DM_Serif_Display({ subsets: ["latin"], weight: "400", style: "italic", variable: "--font-dm-serif", display: "swap" });
+// Fonts are bundled in src/fonts (latin subsets, SIL Open Font License) so builds
+// never depend on downloading from Google Fonts.
+const ultra = localFont({
+  src: "../fonts/ultra-latin.woff2",
+  weight: "400",
+  variable: "--font-ultra",
+  display: "swap",
+});
+const jost = localFont({
+  src: "../fonts/jost-latin.woff2", // variable font
+  weight: "400 700",
+  variable: "--font-jost",
+  display: "swap",
+});
+const dmSerif = localFont({
+  src: "../fonts/dm-serif-display-italic-latin.woff2",
+  weight: "400",
+  style: "italic",
+  variable: "--font-dm-serif",
+  display: "swap",
+});
 
 const defaultTitle = `${site.name} | Cocktail Bar in Downtown Stuart, FL`;
 
