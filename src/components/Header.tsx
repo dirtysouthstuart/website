@@ -17,8 +17,6 @@ export function Header() {
           </Link>
         ))}
       </nav>
-      {/* Phones: the left column is free, so the social icons sit there. */}
-      <SocialLinks size="sm" className="min-[861px]:hidden" />
 
       <Link href="/" aria-label={`${site.name} home`} className="col-start-2 row-start-1">
         <Image
@@ -46,8 +44,8 @@ export function Header() {
             {item.label}
           </Link>
         ))}
-        {/* Wide screens only; between 861px and 1200px the two link groups fill the bar. */}
-        <SocialLinks size="sm" className="max-[1199px]:hidden pl-[clamp(14px,1.6vw,24px)] border-l-2 border-ink/20" />
+        {/* Hidden on narrower screens, where the nav links fill the bar (the footer always has them). */}
+        <SocialLinks variant="plain" className="max-[1099px]:hidden -mr-2 pl-[clamp(10px,1.2vw,18px)] border-l-2 border-ink/15" />
       </nav>
     </header>
   );

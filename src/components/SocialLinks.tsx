@@ -8,10 +8,15 @@ const NETWORKS = {
   tiktok: { icon: FaTiktok, label: "TikTok" },
 };
 
-/** Icon links to the bar's social profiles (from site.social). */
-export function SocialLinks({ className, size = "md" }: { className?: string; size?: "sm" | "md" }) {
+/**
+ * Icon links to the bar's social profiles (from site.social).
+ * - "boxed": outlined squares, for the footer and contact page
+ * - "plain": bare icons styled like the nav links, for the header
+ */
+export function SocialLinks({ className, variant = "boxed" }: { className?: string; variant?: "boxed" | "plain" }) {
+  const plain = variant === "plain";
   return (
-    <ul className={cn("flex items-center gap-2.5", className)}>
+    <ul className={cn("flex items-center", plain ? "gap-1" : "gap-2.5", className)}>
       {socialLinks.map(({ network, url }) => {
         const { icon: Icon, label } = NETWORKS[network];
         return (
@@ -23,11 +28,13 @@ export function SocialLinks({ className, size = "md" }: { className?: string; si
               aria-label={`${site.name} on ${label}`}
               title={label}
               className={cn(
-                "grid place-items-center border-2 border-ink bg-cream text-ink hover:bg-ink hover:text-cream transition-colors",
-                size === "sm" ? "w-8 h-8" : "w-10 h-10"
+                "grid place-items-center transition-colors",
+                plain
+                  ? "w-9 h-9 text-ink hover:text-rose"
+                  : "w-10 h-10 border-2 border-ink bg-cream text-ink hover:bg-ink hover:text-cream"
               )}
             >
-              <Icon className={size === "sm" ? "w-3.5 h-3.5" : "w-4.5 h-4.5"} aria-hidden />
+              <Icon className={plain ? "w-[19px] h-[19px]" : "w-4 h-4"} aria-hidden />
             </a>
           </li>
         );
