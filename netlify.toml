@@ -1,8 +1,14 @@
-# Netlify detects Next.js and runs it with its Next.js runtime (OpenNext adapter):
-# pages are cached at the edge and refreshed on demand when Sanity content changes.
+# Netlify runs the site with its Next.js runtime (the OpenNext adapter), which
+# serves the pages from Netlify Functions and handles caching/revalidation.
+# The adapter is declared explicitly (and pinned in package.json) so it always
+# runs; without it Netlify serves .next as plain files and every page 404s.
+# To upgrade it: npm install -D @netlify/plugin-nextjs@latest
 [build]
   command = "npm run build"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
