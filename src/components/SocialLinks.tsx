@@ -30,11 +30,11 @@ export function SocialLinks({ className, variant = "boxed" }: { className?: stri
               className={cn(
                 "grid place-items-center transition-colors",
                 plain
-                  ? "w-9 h-9 text-ink hover:text-rose"
+                  ? "w-10 h-10 text-ink hover:text-rose"
                   : "w-10 h-10 border-2 border-ink bg-cream text-ink hover:bg-ink hover:text-cream"
               )}
             >
-              <Icon className={plain ? "w-[19px] h-[19px]" : "w-4 h-4"} aria-hidden />
+              <Icon className={plain ? "w-[23px] h-[23px]" : "w-4 h-4"} aria-hidden />
             </a>
           </li>
         );
