@@ -7,5 +7,8 @@ export default defineCliConfig({
   },
   // Hosted Studio address: https://dirtysouthbar.sanity.studio
   studioHost: "dirtysouthbar",
-  autoUpdates: true,
+  deployment: {
+    appId: "uawmyup0nnq7wtr79lgr0ng1",
+    autoUpdates: true,
+  },
 });
