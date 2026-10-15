@@ -6,7 +6,7 @@ import type { Cocktail, Events, Menu } from "./types";
 // section hides instead of the whole page failing.
 async function safeFetch<T>(query: string, fallback: T): Promise<T> {
   try {
-    const { data } = await sanityFetch({ query });
+    const { data } = await sanityFetch<T>({ query });
     return (data as T) ?? fallback;
   } catch (error) {
     console.error("[sanity] query failed:", error);
