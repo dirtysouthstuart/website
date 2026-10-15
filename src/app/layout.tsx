@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Toaster } from "@/components/ui/toaster";
 import { JsonLd, barSchema, websiteSchema } from "@/lib/structured-data";
 import { shareImage, site } from "@/lib/site";
+import { SanityLive } from "@/sanity/live";
 import "./globals.css";
 
 // Fonts are bundled in src/fonts (latin subsets, SIL Open Font License) so builds
@@ -94,6 +95,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Get on the list
         </Link>
         <Toaster />
+        {/* Refreshes cached Sanity content the moment it is published. */}
+        <SanityLive />
       </body>
     </html>
   );

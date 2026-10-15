@@ -2,14 +2,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { JoinClubForm } from "@/components/JoinClubForm";
 import { MenuCard } from "@/components/MenuCard";
-import { EventCard } from "@/components/EventCard";
-import { events } from "@/lib/events";
-import { instagramPhotos, merch, regularMenuItems } from "@/lib/content";
+import { SpecialEventCard, WeeklyEventCard } from "@/components/events/EventCards";
+import { upcomingSpecials } from "@/lib/events";
+import { instagramPhotos, merch } from "@/lib/content";
 import { site } from "@/lib/site";
+import { getEvents, getFeaturedCocktails } from "@/sanity/fetch";
+
+// Content updates arrive instantly via Sanity Live; the hourly refresh drops
+// special events once they are over.
+export const revalidate = 3600;
 
 const sectionPad = "px-[clamp(16px,4vw,56px)] py-[clamp(60px,8vw,110px)] text-center";
 
-export default function Home() {
+export default async function Home() {
+  const [featured, { weekly, special }] = await Promise.all([getFeaturedCocktails(), getEvents()]);
+  // Up to three cards: upcoming special events first, then weekly regulars.
+  const specials = upcomingSpecials(special).slice(0, 3);
+  const weeklyShown = weekly.slice(0, 3 - specials.length);
+
   return (
     <>
       {/* Hero */}
@@ -68,30 +78,37 @@ export default function Home() {
       </section>
 
       {/* Menu highlights */}
+      {featured.length > 0 && (
       <section id="menu" className={`${sectionPad} bg-sand`}>
         <h2 className="script">the dirty list</h2>
         <p className="text-lg mt-2.5 mb-10">A few house favorites. Ask the bartender about the ones we can&apos;t print.</p>
         <div className="grid grid-cols-5 max-[1100px]:grid-cols-3 max-[700px]:grid-cols-1 gap-[18px] max-w-[1180px] mx-auto mb-10">
-          {regularMenuItems.slice(0, 5).map((item) => (
-            <MenuCard key={item.id} item={item} />
+          {featured.map((c) => (
+            <MenuCard key={c._id} name={c.name} description={c.description} />
           ))}
         </div>
         <Link href="/menu" className="btn-block">See the Full Menu</Link>
       </section>
+      )}
 
-      {/* Weekly events */}
+      {/* Events */}
+      {specials.length + weeklyShown.length > 0 && (
       <section id="events" className={`${sectionPad} bg-navy`}>
         <h2 className="ultra text-[clamp(44px,6vw,84px)] leading-[.9] text-blush text-stroke-3 [text-shadow:5px_5px_0_theme(colors.ink)]">
           What&apos;s <em className="not-italic text-cream">on</em>
         </h2>
-        <p className="text-lg text-cream mt-4 mb-11">Every week at the Dirty South.</p>
+        <p className="text-lg text-cream mt-4 mb-11">At the Dirty South.</p>
         <div className="grid grid-cols-3 max-[1000px]:grid-cols-1 gap-[clamp(16px,2.4vw,32px)] max-w-[1180px] mx-auto mb-11">
-          {events.map((event, i) => (
-            <EventCard key={event.id} event={event} index={i} />
+          {specials.map(({ event }, i) => (
+            <SpecialEventCard key={event._id} event={event} index={i} />
+          ))}
+          {weeklyShown.map((event, i) => (
+            <WeeklyEventCard key={event._id} event={event} index={specials.length + i} />
           ))}
         </div>
         <Link href="/events" className="btn-block bg-blush text-ink hover:bg-cream">See All Events</Link>
       </section>
+      )}
 
       {/* Merch */}
       <section id="merch" className={`${sectionPad} bg-blush`}>
@@ -186,6 +203,14 @@ export default function Home() {
             );
           })}
         </div>
+        <a
+          href={site.social.instagram}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-block mt-9"
+        >
+          Follow @dirtysouthbar
+        </a>
       </section>
 
       {/* Email club */}

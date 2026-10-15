@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { SocialLinks } from "@/components/SocialLinks";
 import { site } from "@/lib/site";
 
 const headingClass = "font-bold text-sm tracking-[.14em] uppercase mb-3 text-navy";
@@ -40,16 +41,13 @@ export function Footer() {
         <div>
           <h2 className={headingClass}>Explore</h2>
           <ul>
-            <li><Link href="/menu" className={linkClass}>Cocktail menu</Link></li>
-            <li><Link href="/events" className={linkClass}>Weekly events</Link></li>
+            <li><Link href="/menu" className={linkClass}>Menu</Link></li>
+            <li><Link href="/events" className={linkClass}>Events</Link></li>
             <li><Link href="/contact" className={linkClass}>Private parties</Link></li>
             <li><Link href="/#merch" className={linkClass}>Merch</Link></li>
-            {site.social.instagram && (
-              <li>
-                <a href={site.social.instagram} target="_blank" rel="noopener noreferrer" className={linkClass}>Instagram</a>
-              </li>
-            )}
           </ul>
+          <h2 className={`${headingClass} mt-6`}>Follow</h2>
+          <SocialLinks />
         </div>
       </div>
 

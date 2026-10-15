@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { upcomingOccurrences, type BarEvent } from "@/lib/events";
+import { upcomingOccurrences } from "@/lib/events";
+import type { WeeklyEvent } from "@/sanity/types";
 
-// "Next up" date for an event. Worked out in the browser so it stays current on a
-// static deploy; the build-time date is only the first paint.
-export function NextUp({ event, initial }: { event: BarEvent; initial?: string }) {
+// "Next up" date for a weekly event, refreshed in the browser so a cached page
+// never shows a date that has already passed.
+export function NextUp({ event, initial }: { event: WeeklyEvent; initial?: string }) {
   const [label, setLabel] = useState(initial);
 
   useEffect(() => {

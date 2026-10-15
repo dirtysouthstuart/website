@@ -1,14 +1,20 @@
 import type { NextConfig } from "next";
 
-// Static export: `npm run build` writes a plain HTML/CSS/JS site to `out/`,
-// which can be dragged onto Netlify Drop or served by any static host.
+// Runs on Netlify's Next.js runtime (not a static export), so Sanity content goes
+// live without a rebuild and next/image is optimized by Netlify's image CDN.
 const nextConfig: NextConfig = {
-  output: "export",
   poweredByHeader: false,
-  images: {
-    // No image server on a static host. Images in public/images are
-    // pre-sized WebP files instead.
-    unoptimized: true,
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
   },
 };
 

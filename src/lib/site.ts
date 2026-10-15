@@ -30,10 +30,12 @@ export const site = {
   orderUrl: "https://order.toasttab.com/order-and-pay/dirty-south-301-southwest-saint-lucie-avenue/4/",
   // TODO: add the online merch store URL. Until then merch buttons render as labels.
   shopUrl: "",
-  // Add profile URLs here; only filled-in links are rendered and listed in structured data.
+  // Linked from the current dirtysouthbar.com. Rendered in the header, footer and
+  // contact page, and listed in structured data (sameAs).
   social: {
-    instagram: "",
-    facebook: "",
+    instagram: "https://www.instagram.com/dirtysouthbar",
+    facebook: "https://www.facebook.com/profile.php?id=61565578493483",
+    tiktok: "https://www.tiktok.com/@dirtysouthbar",
   },
   priceRange: "$$",
   // Hours must match the Google Business Profile (mismatched hours confuse Google).
@@ -51,7 +53,7 @@ export const site = {
 // Header navigation, split around the centered logo. Hash links target homepage sections.
 export const NAV_LEFT = [
   { label: "About", href: "/#about" },
-  { label: "Menu", href: "/#menu" },
+  { label: "Menu", href: "/menu" },
   { label: "Events", href: "/events" },
   { label: "Merch", href: "/#merch" },
 ] as const;

@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { MenuCard } from "@/components/MenuCard";
-import { currentSeasonalItems, type MenuItem } from "@/lib/content";
+import { currentSpecialCocktails } from "@/lib/content";
+import type { Cocktail } from "@/sanity/types";
 
-// Seasonal drinks that were current at build time. The list is re-checked in the
-// browser so drinks past their `availableUntil` date drop off without a redeploy.
-export function SeasonalSips({ items, gridClass }: { items: MenuItem[]; gridClass: string }) {
+const BADGES = { seasonal: "Seasonal", limited: "Limited time", signature: undefined } as const;
+
+// Seasonal and limited-time cocktails. The list is re-checked in the browser so
+// drinks past their "available until" date drop off even on a cached page.
+export function SeasonalSips({ items, gridClass }: { items: Cocktail[]; gridClass: string }) {
   const [current, setCurrent] = useState(items);
 
   useEffect(() => {
-    setCurrent(currentSeasonalItems(items));
+    setCurrent(currentSpecialCocktails(items));
   }, [items]);
 
   if (current.length === 0) return null;
@@ -30,7 +33,15 @@ export function SeasonalSips({ items, gridClass }: { items: MenuItem[]; gridClas
       </p>
       <div className={gridClass}>
         {current.map((item) => (
-          <MenuCard key={item.id} item={item} />
+          <MenuCard
+            key={item._id}
+            name={item.name}
+            description={item.description}
+            price={item.price}
+            badge={BADGES[item.availability]}
+            availableUntil={item.availableUntil}
+            image={item.image}
+          />
         ))}
       </div>
     </div>

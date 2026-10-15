@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { SocialLinks } from "@/components/SocialLinks";
 import { NAV_LEFT, NAV_RIGHT, site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -16,8 +17,10 @@ export function Header() {
           </Link>
         ))}
       </nav>
+      {/* Phones: the left column is free, so the social icons sit there. */}
+      <SocialLinks size="sm" className="min-[861px]:hidden" />
 
-      <Link href="/" aria-label={`${site.name} home`} className="col-start-2">
+      <Link href="/" aria-label={`${site.name} home`} className="col-start-2 row-start-1">
         <Image
           src="/images/arch-girl-surf.webp"
           alt={site.name}
@@ -29,7 +32,7 @@ export function Header() {
         />
       </Link>
 
-      <nav aria-label="Secondary" className={cn(navClass, "col-start-3 justify-end")}>
+      <nav aria-label="Secondary" className={cn(navClass, "col-start-3 row-start-1 justify-end items-center")}>
         {NAV_RIGHT.map((item, i) => (
           <Link
             key={item.href}
@@ -43,6 +46,8 @@ export function Header() {
             {item.label}
           </Link>
         ))}
+        {/* Wide screens only; between 861px and 1200px the two link groups fill the bar. */}
+        <SocialLinks size="sm" className="max-[1199px]:hidden pl-[clamp(14px,1.6vw,24px)] border-l-2 border-ink/20" />
       </nav>
     </header>
   );

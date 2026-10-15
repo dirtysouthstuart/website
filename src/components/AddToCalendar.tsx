@@ -1,30 +1,27 @@
 "use client";
 
 import { site } from "@/lib/site";
-import { ICS_DAY, TIME_ZONE, upcomingOccurrences, type BarEvent } from "@/lib/events";
+import { ICS_DAY, specialTiming, TIME_ZONE, upcomingOccurrences } from "@/lib/events";
+import type { SpecialEvent, WeeklyEvent } from "@/sanity/types";
 
 // Escape text per RFC 5545
 const icsText = (s: string) => s.replace(/\\/g, "\\\\").replace(/([,;])/g, "\\$1").replace(/\n/g, "\\n");
 
-function buildIcs(event: BarEvent) {
-  const upcoming = upcomingOccurrences([event], 8);
-  // First upcoming occurrence of each weekly slot seeds a repeating calendar entry.
-  const firsts = event.schedule
-    .map((slot) => upcoming.find((o) => o.slot.day === slot.day))
-    .filter((o) => o !== undefined);
+type Entry = { uid: string; startLocal: string; endLocal: string; byDay?: string };
 
+function buildIcs(title: string, description: string, entries: Entry[]) {
   const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const location = `${site.name}, ${site.address.street}, ${site.address.city}, ${site.address.region} ${site.address.postalCode}`;
-  const vevents = firsts.map(({ slot, startLocal, endLocal }) =>
+  const vevents = entries.map(({ uid, startLocal, endLocal, byDay }) =>
     [
       "BEGIN:VEVENT",
-      `UID:${event.id}-${ICS_DAY[slot.day].toLowerCase()}@dirtysouthbar.com`,
+      `UID:${uid}@dirtysouthbar.com`,
       `DTSTAMP:${stamp}`,
       `DTSTART;TZID=${TIME_ZONE}:${startLocal}`,
       `DTEND;TZID=${TIME_ZONE}:${endLocal}`,
-      `RRULE:FREQ=WEEKLY;BYDAY=${ICS_DAY[slot.day]}`,
-      `SUMMARY:${icsText(`${event.title} at ${site.name}`)}`,
-      `DESCRIPTION:${icsText(`${event.description}\n${site.url}/events`)}`,
+      ...(byDay ? [`RRULE:FREQ=WEEKLY;BYDAY=${byDay}`] : []),
+      `SUMMARY:${icsText(`${title} at ${site.name}`)}`,
+      `DESCRIPTION:${icsText(`${description}\n${site.url}/events`)}`,
       `LOCATION:${icsText(location)}`,
       "END:VEVENT",
     ].join("\r\n")
@@ -32,14 +29,36 @@ function buildIcs(event: BarEvent) {
   return ["BEGIN:VCALENDAR", "VERSION:2.0", `PRODID:-//${site.name}//Events//EN`, "CALSCALE:GREGORIAN", ...vevents, "END:VCALENDAR"].join("\r\n");
 }
 
-export function AddToCalendar({ event }: { event: BarEvent }) {
-  // Built at click time so the first date is always the next upcoming one.
+function weeklyEntries(event: WeeklyEvent): Entry[] {
+  const upcoming = upcomingOccurrences([event], 8);
+  // First upcoming occurrence of each weekly slot seeds a repeating calendar entry.
+  return event.schedule
+    .map((slot) => upcoming.find((o) => o.slot.day === slot.day))
+    .filter((o) => o !== undefined)
+    .map((o) => ({
+      uid: `${event._id}-${ICS_DAY[o.slot.day].toLowerCase()}`,
+      startLocal: o.startLocal,
+      endLocal: o.endLocal,
+      byDay: ICS_DAY[o.slot.day],
+    }));
+}
+
+function specialEntries(event: SpecialEvent): Entry[] {
+  const t = specialTiming(event);
+  return [{ uid: event._id, startLocal: t.startLocal, endLocal: t.endLocal }];
+}
+
+/** Downloads an .ics file: a weekly repeating entry, or a one-off for special events. */
+export function AddToCalendar(props: { weekly: WeeklyEvent } | { special: SpecialEvent }) {
+  // Built at click time so a weekly event's first date is always the next one.
   const download = () => {
-    const blob = new Blob([buildIcs(event)], { type: "text/calendar;charset=utf-8" });
+    const event = "weekly" in props ? props.weekly : props.special;
+    const entries = "weekly" in props ? weeklyEntries(props.weekly) : specialEntries(props.special);
+    const blob = new Blob([buildIcs(event.title, event.description, entries)], { type: "text/calendar;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${event.id}.ics`;
+    a.download = `${event._id}.ics`;
     a.click();
     URL.revokeObjectURL(url);
   };

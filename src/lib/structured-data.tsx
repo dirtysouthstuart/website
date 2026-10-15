@@ -1,6 +1,8 @@
 import { site, socialLinks } from "@/lib/site";
-import type { MenuItem } from "@/lib/content";
-import type { Occurrence } from "@/lib/events";
+import type { Occurrence, SpecialTiming } from "@/lib/events";
+import type { SpecialEvent } from "@/sanity/types";
+
+export type MenuSchemaItem = { name: string; description?: string; price?: number };
 
 type Schema = Record<string, unknown>;
 
@@ -83,36 +85,65 @@ export function breadcrumbSchema(name: string, path: string): Schema {
   };
 }
 
-// One Event per upcoming occurrence, as Google recommends for recurring events.
-export function eventSchemas(occurrences: Occurrence[]): Schema[] {
-  return occurrences.map((occ) => ({
+const LOCATION = {
+  "@type": "Place",
+  name: site.name,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: site.address.street,
+    addressLocality: site.address.city,
+    addressRegion: site.address.region,
+    postalCode: site.address.postalCode,
+    addressCountry: site.address.country,
+  },
+};
+
+function eventSchema(e: { name: string; description: string; startDate: string; endDate?: string; url: string }): Schema {
+  return {
     "@context": "https://schema.org",
     "@type": "Event",
-    name: `${occ.event.title} at ${site.name}`,
-    description: occ.event.description,
-    startDate: occ.startIso,
-    endDate: occ.endIso,
+    name: `${e.name} at ${site.name}`,
+    description: e.description,
+    startDate: e.startDate,
+    ...(e.endDate ? { endDate: e.endDate } : {}),
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-    url: `${site.url}/events#${occ.event.id}`,
+    url: e.url,
     image: [`${site.url}/images/og-image.jpg`],
-    location: {
-      "@type": "Place",
-      name: site.name,
-      address: {
-        "@type": "PostalAddress",
-        streetAddress: site.address.street,
-        addressLocality: site.address.city,
-        addressRegion: site.address.region,
-        postalCode: site.address.postalCode,
-        addressCountry: site.address.country,
-      },
-    },
+    location: LOCATION,
     organizer: { "@type": "BarOrPub", "@id": BAR_ID, name: site.name, url: site.url },
-  }));
+  };
 }
 
-export function menuSchema(sections: { name: string; items: MenuItem[] }[]): Schema {
+// One Event per upcoming occurrence of weekly events, as Google recommends for
+// recurring events, plus one per upcoming special event.
+export function eventSchemas(
+  occurrences: Occurrence[],
+  specials: { event: SpecialEvent; timing: SpecialTiming }[]
+): Schema[] {
+  return [
+    ...specials.map(({ event, timing }) =>
+      eventSchema({
+        name: event.title,
+        description: event.description,
+        startDate: timing.startIso,
+        endDate: timing.hasEnd ? timing.endIso : undefined,
+        url: `${site.url}/events#${event._id}`,
+      })
+    ),
+    ...occurrences.map((occ) =>
+      eventSchema({
+        name: occ.event.title,
+        description: occ.event.description,
+        startDate: occ.startIso,
+        endDate: occ.endIso,
+        url: `${site.url}/events#${occ.event._id}`,
+      })
+    ),
+  ];
+}
+
+export function menuSchema(sections: { name: string; items: MenuSchemaItem[] }[]): Schema {
   return {
     "@context": "https://schema.org",
     "@type": "Menu",
@@ -127,8 +158,8 @@ export function menuSchema(sections: { name: string; items: MenuItem[] }[]): Sch
         hasMenuItem: section.items.map((item) => ({
           "@type": "MenuItem",
           name: item.name,
-          description: item.description,
-          ...(item.price ? { offers: { "@type": "Offer", price: item.price, priceCurrency: "USD" } } : {}),
+          ...(item.description ? { description: item.description } : {}),
+          ...(item.price != null ? { offers: { "@type": "Offer", price: item.price, priceCurrency: "USD" } } : {}),
         })),
       })),
   };

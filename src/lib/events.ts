@@ -1,42 +1,12 @@
-import eventsData from "@/data/events.json";
 import { site } from "@/lib/site";
+import type { EventSlot, SpecialEvent, WeeklyEvent, Weekday } from "@/sanity/types";
 
-// Weekly recurring events. Times are local to the bar (America/New_York), in
-// 24h "HH:MM"; an end time at or before the start time means it runs past midnight.
-
-// TODO: confirm the lineup and times with the client, then set to true to publish
-// events in structured data (Google event listings).
-export const eventsVerified = false;
+// Event date math. Times are local to the bar (America/New_York), in 24h
+// "HH:MM"; an end time at or before the start time means it runs past midnight.
 
 export const TIME_ZONE = "America/New_York";
 
-export const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const;
-export type Weekday = (typeof WEEKDAYS)[number];
-
-export type EventSlot = { day: Weekday; start: string; end: string };
-
-export type BarEvent = {
-  id: string;
-  title: string;
-  dayLabel: string;
-  description: string;
-  schedule: EventSlot[];
-};
-
-export type Occurrence = {
-  event: BarEvent;
-  slot: EventSlot;
-  /** e.g. "Wed, Oct 8" */
-  dateLabel: string;
-  /** ISO 8601 with the bar's UTC offset, for structured data */
-  startIso: string;
-  endIso: string;
-  /** Floating local times, e.g. "20261008T200000", for calendar files */
-  startLocal: string;
-  endLocal: string;
-};
-
-export const events = eventsData as BarEvent[];
+export const WEEKDAYS: Weekday[] = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 const SHORT_DAY: Record<Weekday, string> = {
   Monday: "Mon", Tuesday: "Tue", Wednesday: "Wed", Thursday: "Thu", Friday: "Fri", Saturday: "Sat", Sunday: "Sun",
@@ -70,17 +40,27 @@ export function formatTime(time: string) {
 }
 
 /** "14:00"-"20:00" -> "2–8PM", "20:00"-"00:00" -> "8PM–12AM" (matches the footer hours style) */
-export function formatTimeRange(start: string, end: string) {
+export function formatTimeRange(start: string, end?: string) {
+  if (!end) return formatTime(start);
   return meridiem(start) === meridiem(end)
     ? `${clock(start)}–${formatTime(end)}`
     : `${formatTime(start)}–${formatTime(end)}`;
 }
 
 /** "8PM–12AM", or "Fri 7PM–2AM · Sat 5PM–2AM" when the time differs by day */
-export function scheduleLabel(event: BarEvent) {
+export function scheduleLabel(event: WeeklyEvent) {
   const ranges = new Set(event.schedule.map((s) => formatTimeRange(s.start, s.end)));
   if (ranges.size === 1) return [...ranges][0];
   return event.schedule.map((s) => `${shortDay(s.day)} ${formatTimeRange(s.start, s.end)}`).join(" · ");
+}
+
+/** The card tag: the editor's label, or the days, e.g. "Fridays" / "Fri & Sat". */
+export function dayLabel(event: WeeklyEvent) {
+  if (event.dayLabel) return event.dayLabel;
+  const days = [...new Set(event.schedule.map((s) => s.day))].sort((a, b) => WEEKDAYS.indexOf(a) - WEEKDAYS.indexOf(b));
+  if (days.length === 1) return `${days[0]}s`;
+  const short = days.map(shortDay);
+  return `${short.slice(0, -1).join(", ")} & ${short.at(-1)}`;
 }
 
 // --- Date math in the bar's time zone -------------------------------------
@@ -106,7 +86,7 @@ function barOffset(y: number, m: number, d: number, h: number, min: number) {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-/** A wall-clock moment in the bar's time zone, for date `base` shifted by `dayOffset` days. */
+/** A wall-clock moment in the bar's time zone on calendar date `base` (UTC midnight) plus `dayOffset` days. */
 function barMoment(base: Date, dayOffset: number, time: string) {
   const { h, m } = parseTime(time);
   const date = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate() + dayOffset));
@@ -116,8 +96,32 @@ function barMoment(base: Date, dayOffset: number, time: string) {
   return { iso, local: `${y}${pad(mo)}${pad(d)}T${pad(h)}${pad(m)}00`, instant: new Date(iso) };
 }
 
-/** Upcoming occurrences of the given events within the next `days` days, soonest first. */
-export function upcomingOccurrences(list: BarEvent[], days = 28, now = new Date()): Occurrence[] {
+const dateLabelFormat = new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+
+/** Start/end of an event on a calendar date, handling past-midnight end times. */
+function eventWindow(date: Date, start: string, end?: string) {
+  const s = barMoment(date, 0, start);
+  // No end time: treat it as a 3-hour event for "is it over yet" and calendar files.
+  const endTime = end ?? `${pad((parseTime(start).h + 3) % 24)}:${pad(parseTime(start).m)}`;
+  const e = barMoment(date, endTime <= start ? 1 : 0, endTime);
+  return { start: s, end: e };
+}
+
+export type Occurrence = {
+  event: WeeklyEvent;
+  slot: EventSlot;
+  /** e.g. "Wed, Oct 8" */
+  dateLabel: string;
+  /** ISO 8601 with the bar's UTC offset, for structured data */
+  startIso: string;
+  endIso: string;
+  /** Floating local times, e.g. "20261008T200000", for calendar files */
+  startLocal: string;
+  endLocal: string;
+};
+
+/** Upcoming occurrences of weekly events within the next `days` days, soonest first. */
+export function upcomingOccurrences(list: WeeklyEvent[], days = 28, now = new Date()): Occurrence[] {
   const today = barToday(now);
   const out: (Occurrence & { at: number })[] = [];
 
@@ -129,14 +133,12 @@ export function upcomingOccurrences(list: BarEvent[], days = 28, now = new Date(
     for (const event of list) {
       for (const slot of event.schedule) {
         if (slot.day !== weekday) continue;
-        const start = barMoment(date, 0, slot.start);
-        const overnight = slot.end <= slot.start;
-        const end = barMoment(date, overnight ? 1 : 0, slot.end);
+        const { start, end } = eventWindow(date, slot.start, slot.end);
         if (end.instant <= now) continue;
         out.push({
           event,
           slot,
-          dateLabel: new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }).format(date),
+          dateLabel: dateLabelFormat.format(date),
           startIso: start.iso,
           endIso: end.iso,
           startLocal: start.local,
@@ -150,18 +152,54 @@ export function upcomingOccurrences(list: BarEvent[], days = 28, now = new Date(
   return out.sort((a, b) => a.at - b.at).map(({ at: _at, ...occ }) => occ);
 }
 
-/** The bar's week, Monday first: opening hours plus the events on each day. */
-export function weeklyLineup() {
+export type SpecialTiming = {
+  dateLabel: string;
+  timeLabel: string;
+  startIso: string;
+  endIso: string;
+  startLocal: string;
+  endLocal: string;
+  /** Whether an end time was entered (structured data only claims one if so). */
+  hasEnd: boolean;
+  endsAt: number;
+};
+
+export function specialTiming(event: SpecialEvent): SpecialTiming {
+  const [y, m, d] = event.date.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const { start, end } = eventWindow(date, event.start, event.end);
+  return {
+    dateLabel: dateLabelFormat.format(date),
+    timeLabel: formatTimeRange(event.start, event.end),
+    startIso: start.iso,
+    endIso: end.iso,
+    startLocal: start.local,
+    endLocal: end.local,
+    hasEnd: Boolean(event.end),
+    endsAt: end.instant.getTime(),
+  };
+}
+
+/** Special events that haven't ended yet, soonest first. */
+export function upcomingSpecials(list: SpecialEvent[], now = new Date()) {
+  return list
+    .map((event) => ({ event, timing: specialTiming(event) }))
+    .filter(({ timing }) => timing.endsAt > now.getTime())
+    .sort((a, b) => a.timing.startIso.localeCompare(b.timing.startIso));
+}
+
+/** The bar's week, Monday first: opening hours plus the weekly events on each day. */
+export function weeklyLineup(list: WeeklyEvent[]) {
   return WEEKDAYS.map((day) => {
     const hours = site.hours.find((h) => (h.days as readonly string[]).includes(day));
     return {
       day,
       short: shortDay(day),
       hours: hours ? formatTimeRange(hours.opens, hours.closes) : "Closed",
-      events: events.flatMap((event) =>
+      events: list.flatMap((event) =>
         event.schedule
           .filter((slot) => slot.day === day)
-          .map((slot) => ({ id: event.id, title: event.title, time: formatTimeRange(slot.start, slot.end) }))
+          .map((slot) => ({ id: event._id, title: event.title, time: formatTimeRange(slot.start, slot.end) }))
       ),
     };
   });

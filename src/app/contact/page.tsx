@@ -1,4 +1,5 @@
 import { MapWithConsent } from "@/components/MapWithConsent";
+import { SocialLinks } from "@/components/SocialLinks";
 import { JsonLd, breadcrumbSchema } from "@/lib/structured-data";
 import { pageMetadata } from "@/lib/metadata";
 import { site } from "@/lib/site";
@@ -63,6 +64,10 @@ export default function Contact() {
                   ))}
                 </p>
               </div>
+            </div>
+            <div>
+              <h3 className={headingClass}>Follow along</h3>
+              <SocialLinks />
             </div>
             <MapWithConsent />
           </div>
